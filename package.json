@@ -1,0 +1,29 @@
+{
+  "name": "wrangler-spend-limit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Per-session spend limits for Agent Wrangler, as an installable extension",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node --test 'server/*.test.js'"
+  },
+  "wranglerExtension": {
+    "id": "spend-limit",
+    "label": "Spend limits",
+    "description": "Set a USD spend limit on a session. Once its card's spend reaches the limit, the wrangler interrupts the model whenever it is working, until you raise or clear the limit.",
+    "author": "Charlie Goldstraw",
+    "requires": [
+      "sessions:interrupt",
+      "board:rebuild"
+    ],
+    "homepage": "https://github.com/charlie-ps/wrangler-spend-limit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlie-ps/wrangler-spend-limit.git"
+  }
+}

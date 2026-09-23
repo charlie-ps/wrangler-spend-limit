@@ -1,0 +1,9 @@
+/* The set/change dialog opened from the card and Actions menus. The card itself
+   is the board's own .modal-card; only the overlay is ours. */
+.spend-limit-modal {
+  position: fixed; inset: 0; background: var(--overlay);
+  display: flex; align-items: center; justify-content: center; z-index: 20;
+}
+.spend-limit-modal .modal-card { width: 360px; }
+.spend-limit-error { min-height: 16px; margin-top: 4px; font-size: 12px; color: var(--red-fg); }
+.spend-limit-modal .modal-actions button[hidden] { display: none; }
