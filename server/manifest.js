@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { LimitStore } from './limit-store.js';
+import { LimitStore, MAX_LIMIT_USD } from './limit-store.js';
 import { createEnforcer, limitsForGraph } from './enforcer.js';
 
 // The extension manifest (agent-wrangler docs/extensions.md). `dir` is the repo
@@ -19,17 +19,37 @@ async function setLimit(msg, host) {
   await host.rebuild();
 }
 
+// The limit a new session starts with. The new-session dialog always sends its
+// field — `usd: null` when the human cleared it — so its slice wins outright.
+// Every other dispatch (spawn_session, a schedule saved before this setting, a
+// sub-agent) carries no slice and gets the Settings default. Runs before the
+// pane starts, so the limit is in force from the first turn.
+export function startingLimit(ext, defaultUsd) {
+  if (ext && 'usd' in ext) return ext.usd == null ? null : Number(ext.usd);
+  return typeof defaultUsd === 'number' ? defaultUsd : null;
+}
+
 export default {
   id: 'spend-limit',
   label: 'Spend limits',
   description: 'Set a USD spend limit on a session. Once its card\'s spend reaches the limit, the wrangler interrupts the model whenever it is working, until you raise or clear the limit.',
-  help: 'Adds a Spend limit field to the new-session dialog and a "Spend limit…" item to the card and Actions menus; a limited card\'s cost tag reads spent / limit. Limits are kept in spend-limits.json across toggles.',
+  help: 'Adds a default limit for new sessions, a Spend limit field under the new-session dialog\'s Advanced options and a "Spend limit…" item to the card and Actions menus; a limited card\'s cost tag reads spent / limit. Limits are kept in spend-limits.json across toggles.',
   author: 'Charlie Goldstraw',
   homepage: 'https://github.com/charlie-ps/wrangler-spend-limit',
   defaultEnabled: true,
   dir,
   requires: ['sessions:interrupt', 'board:rebuild'],
-  engines: { wranglerApi: '^1.10.0' },
+  engines: { wranglerApi: '^1.13.0' },
+
+  settings: [{
+    key: 'defaultUsd',
+    type: 'number',
+    label: 'Default spend limit ($)',
+    help: 'The limit every new session starts with. The new-session dialog prefills it under Advanced options, where you can change or clear it for that one session. Empty means sessions start with no limit.',
+    placeholder: 'No limit',
+    min: 0.01,
+    max: MAX_LIMIT_USD,
+  }],
 
   stores: { limits: () => new LimitStore() },
 
@@ -44,10 +64,9 @@ export default {
   },
 
   session: {
-    // The new-session dialog's field arrives as this extension's `ext` slice
-    // before the pane starts, so the limit is in force from the first turn.
     onBeforeDispatch: ({ sessionId, ext, host }) => {
-      if (ext?.usd != null) host.stores.limits.set(sessionId, Number(ext.usd));
+      const usd = startingLimit(ext, host.settings.get('defaultUsd'));
+      if (usd != null) host.stores.limits.set(sessionId, usd);
     },
     onPurge: ({ sessionId, host }) => { host.stores.limits.set(sessionId, null); },
   },

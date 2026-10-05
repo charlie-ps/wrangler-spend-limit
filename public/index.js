@@ -1,6 +1,7 @@
 // The client half, living entirely in the board's own chrome:
-//  - a Spend limit field in the new-session dialog (dispatch.field), sent to
-//    the server half as this extension's `ext` data and stored before launch;
+//  - a Spend limit field under the new-session dialog's Advanced options
+//    (dispatch.field), prefilled with the Settings default and sent to the
+//    server half as this extension's `ext` data, stored before launch;
 //  - a "Spend limit…" item in the card and Actions menus (card.action), which
 //    opens a small dialog to set, change or remove it;
 //  - the ceiling in the core cost tag (card.cost), which core draws as
@@ -38,22 +39,40 @@ function dollarInput(value = '') {
   return input;
 }
 
+// The Settings default as the dialog's starting value ('' for none). Read live,
+// so a change in Settings shows on the next open.
+function defaultValue(api) {
+  const usd = parseLimit(api.settings?.()?.defaultUsd);
+  return usd ? String(usd) : '';
+}
+
+// Lives under Advanced options, prefilled with the Settings default. The field
+// mounts once and survives closing the modal, so `update` resets it to the
+// default on each open: app.js syncs the fields just before it unhides the
+// modal, so an update while the modal is still hidden is an open, while one
+// with it showing (a model change) must leave the human's value alone.
 function dispatchField() {
+  let api = null;
   return {
     id: 'dispatch',
-    at: 'model',
-    mount(el) {
+    at: 'advanced',
+    mount(el, a) {
+      api = a;
       const label = document.createElement('label');
       label.textContent = 'Spend limit ($)';
-      const input = dollarInput();
+      const input = dollarInput(defaultValue(api));
       input.className = 'spend-limit-dispatch-input';
       input.setAttribute('aria-label', 'Spend limit in dollars');
       el.append(label, input);
     },
-    // Only a valid positive amount is sent; blank or invalid means no limit.
+    update(el) {
+      const input = el.querySelector('.spend-limit-dispatch-input');
+      if (input && api && el.closest('.hidden')) input.value = defaultValue(api);
+    },
+    // Always sent, so a cleared field means "no limit" for this session rather
+    // than falling back to the default server-side. Invalid counts as blank.
     ext(el) {
-      const usd = parseLimit(el.querySelector('.spend-limit-dispatch-input')?.value);
-      return usd ? { usd } : undefined;
+      return { usd: parseLimit(el.querySelector('.spend-limit-dispatch-input')?.value) ?? null };
     },
   };
 }
