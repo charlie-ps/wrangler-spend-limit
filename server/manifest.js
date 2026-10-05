@@ -49,6 +49,9 @@ export default {
     placeholder: 'No limit',
     min: 0.01,
     max: MAX_LIMIT_USD,
+    // Cents. Without it the browser's default step of 1, counted from min,
+    // refuses $25.50 (only 25.01, 26.01, … are valid).
+    step: 0.01,
   }],
 
   stores: { limits: () => new LimitStore() },
