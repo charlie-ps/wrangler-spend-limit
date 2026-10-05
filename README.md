@@ -6,7 +6,7 @@ Set a default under **Settings → Extensions → Spend limits** and every new s
 
 Spend is the card's own figure (the `$` tag on the card, sub-agents included). A `/clear` or a fork therefore starts a fresh count. Claude only writes spend to its transcript when a message lands, so the check runs between steps. A single long reply with no tool calls can't be stopped part-way.
 
-Requires host API `^1.13.0`: the `sessions:interrupt` capability, the `card.action` and `card.cost` slots, dispatch-field `ext` data and the browser's `api.settings()`. An older wrangler quarantines the extension at load. Limits live in `<AW_DATA_DIR>/spend-limits.json`.
+Requires host API `^1.20.0`: the `sessions:interrupt` capability, the `card.action` and `card.cost` slots, dispatch-field `ext` data and `open`, and the browser's `api.settings()`. An older wrangler quarantines the extension at load. Limits live in `<AW_DATA_DIR>/spend-limits.json`.
 
 ## Install
 

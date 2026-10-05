@@ -46,11 +46,10 @@ function defaultValue(api) {
   return usd ? String(usd) : '';
 }
 
-// Lives under Advanced options, prefilled with the Settings default. The field
-// mounts once and survives closing the modal, so `update` resets it to the
-// default on each open: app.js syncs the fields just before it unhides the
-// modal, so an update while the modal is still hidden is an open, while one
-// with it showing (a model change) must leave the human's value alone.
+// Lives under Advanced options. `open` runs once per dialog open, after core
+// has reset its own fields: a fresh dialog gets the Settings default, and
+// editing a schedule gets the value saved with it. A schedule saved before this
+// field existed has no slice and launches with the default, so it shows that.
 function dispatchField() {
   let api = null;
   return {
@@ -60,14 +59,17 @@ function dispatchField() {
       api = a;
       const label = document.createElement('label');
       label.textContent = 'Spend limit ($)';
-      const input = dollarInput(defaultValue(api));
+      const input = dollarInput();
       input.className = 'spend-limit-dispatch-input';
       input.setAttribute('aria-label', 'Spend limit in dollars');
       el.append(label, input);
     },
-    update(el) {
+    open(el, ctx) {
       const input = el.querySelector('.spend-limit-dispatch-input');
-      if (input && api && el.closest('.hidden')) input.value = defaultValue(api);
+      if (!input) return;
+      input.value = ctx.editing && ctx.saved
+        ? (ctx.saved.usd == null ? '' : String(ctx.saved.usd))
+        : defaultValue(api);
     },
     // Always sent, so a cleared field means "no limit" for this session rather
     // than falling back to the default server-side. Invalid counts as blank.

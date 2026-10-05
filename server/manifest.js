@@ -39,7 +39,7 @@ export default {
   defaultEnabled: true,
   dir,
   requires: ['sessions:interrupt', 'board:rebuild'],
-  engines: { wranglerApi: '^1.13.0' },
+  engines: { wranglerApi: '^1.20.0' },
 
   settings: [{
     key: 'defaultUsd',
